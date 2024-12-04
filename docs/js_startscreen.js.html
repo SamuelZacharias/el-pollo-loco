@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: js/startscreen.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: js/startscreen.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Sets up event listeners for the start button and screen orientation handling.
+ * Initializes the game when the start button is clicked and manages the screen rotation message.
+ */
+document.addEventListener('DOMContentLoaded', function () {
+    // Start game when the start button is clicked
+    document.getElementById('start-button').addEventListener('click', function () {
+        document.getElementById('landing-page').style.display = 'none';
+        document.getElementById('impressum').classList.add('hidden');
+        document.getElementById('game-container').classList.remove('hidden');
+        init();  // Initialize the game
+    });
+
+    const rotateMessageContainer = document.getElementById('rotate-message-container');
+    const rotateIcon = document.getElementById('rotate-icon');
+
+    // Ensure both rotate icon and message container exist
+    if (!rotateIcon || !rotateMessageContainer) {
+        console.error("Das Element 'rotate-message-container' oder 'rotate-icon' wurde nicht gefunden.");
+    } else {
+        // Check and manage orientation changes
+        checkOrientation();
+        window.addEventListener('resize', checkOrientation);
+    }
+
+    /**
+     * Checks the screen orientation and displays a rotate message if necessary.
+     */
+    function checkOrientation() {
+        if (window.innerHeight > window.innerWidth) {
+            rotateMessageContainer.style.display = 'flex';
+            startIconAnimation(rotateIcon);  // Start animation when rotation is needed
+        } else {
+            rotateMessageContainer.style.display = 'none';
+            stopIconAnimation();  // Stop animation when rotation is correct
+        }
+    }
+
+    /**
+     * Starts an animation that alternates the rotate icon image every 500ms.
+     * 
+     * @param {HTMLElement} icon - The rotate icon element.
+     */
+    function startIconAnimation(icon) {
+        let isShowingFirstImage = true;
+        icon.animationInterval = setInterval(() => {
+            icon.src = isShowingFirstImage ? 'img/landing_page/rotate.png' : 'img/landing_page/rotate1.png';
+            isShowingFirstImage = !isShowingFirstImage;
+        }, 500);
+    }
+
+    /**
+     * Stops the rotation icon animation by clearing the interval.
+     */
+    function stopIconAnimation() {
+        clearInterval(rotateIcon.animationInterval);
+    }
+});
+
+/**
+ * Restarts the game by clearing previous game loops, resetting intervals and timeouts,
+ * and initializing the game level again.
+ */
+function restartGame() {
+    cancelAnimationFrame(world.animationFrameId);  // Cancel ongoing animations
+    clearAllIntervals();  // Clear all intervals
+    clearAllTimeouts();  // Clear all timeouts
+
+    const canvas = document.getElementById('canvas');
+
+    initLevel();  // Reinitialize the game level
+    world = new World(canvas, keyboard);  // Create a new world instance
+
+    world.run();  // Start the game loop
+
+    document.getElementById('end-game-buttons').style.display = 'none';  // Hide the end-game buttons
+}
+
+/**
+ * Clears all active intervals by iterating through a large range of possible interval IDs.
+ */
+function clearAllIntervals() {
+    for (let i = 1; i &lt; 10000; i++) {
+        clearInterval(i);
+    }
+}
+
+/**
+ * Clears all active timeouts by iterating through a large range of possible timeout IDs.
+ */
+function clearAllTimeouts() {
+    for (let i = 1; i &lt; 10000; i++) {
+        clearTimeout(i);
+    }
+}
+
+/**
+ * Redirects the user to the main menu by changing the current window's location to the index page.
+ */
+function exitToMainMenu() {
+    window.location.href = 'index.html';
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AudioManager.html">AudioManager</a></li><li><a href="BackgroundObject.html">BackgroundObject</a></li><li><a href="Bottle.html">Bottle</a></li><li><a href="Bottlebar.html">Bottlebar</a></li><li><a href="Character.html">Character</a></li><li><a href="Chicken.html">Chicken</a></li><li><a href="Cloud.html">Cloud</a></li><li><a href="Coin.html">Coin</a></li><li><a href="Coinbar.html">Coinbar</a></li><li><a href="CollisionHandler.html">CollisionHandler</a></li><li><a href="Drawableobject.html">Drawableobject</a></li><li><a href="Endboss.html">Endboss</a></li><li><a href="Keyboard.html">Keyboard</a></li><li><a href="Level.html">Level</a></li><li><a href="MovableObject.html">MovableObject</a></li><li><a href="Statusbar.html">Statusbar</a></li><li><a href="Statusbarendboss.html">Statusbarendboss</a></li><li><a href="ThrowableObject.html">ThrowableObject</a></li><li><a href="World.html">World</a></li></ul><h3>Global</h3><ul><li><a href="global.html#clearAllIntervals">clearAllIntervals</a></li><li><a href="global.html#clearAllTimeouts">clearAllTimeouts</a></li><li><a href="global.html#exitToMainMenu">exitToMainMenu</a></li><li><a href="global.html#handleButtonPress">handleButtonPress</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initLevel">initLevel</a></li><li><a href="global.html#restartGame">restartGame</a></li><li><a href="global.html#setupButtonEvents">setupButtonEvents</a></li><li><a href="global.html#toggleFullscreen">toggleFullscreen</a></li><li><a href="global.html#toggleMute">toggleMute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Oct 21 2024 16:48:17 GMT+0200 (Mitteleuropäische Sommerzeit)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

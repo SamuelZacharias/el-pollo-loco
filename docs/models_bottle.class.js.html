@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: models/bottle.class.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: models/bottle.class.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Represents a bottle object in the game, which can be collected or thrown by the character.
+ * Inherits from DrawableObject and manages the positioning and rendering of bottles.
+ */
+class Bottle extends Drawableobject {
+    /**
+     * The x-coordinate of the bottle on the game canvas.
+     * @type {number}
+     */
+    x = 0;
+
+    /**
+     * The y-coordinate of the bottle on the game canvas.
+     * @type {number}
+     */
+    y = 360;
+
+    /**
+     * Array of image paths representing the possible appearances of the bottle when placed on the ground.
+     * @type {string[]}
+     */
+    IMAGES_WALKING = [
+        'img/6_salsa_bottle/1_salsa_bottle_on_ground.png',
+        'img/6_salsa_bottle/2_salsa_bottle_on_ground.png'
+    ];
+
+    /**
+     * Static array that keeps track of the x-coordinates of all existing bottles.
+     * Ensures that new bottles are not placed too close to each other.
+     * @type {number[]}
+     */
+    static existingBottles = [];
+
+    /**
+     * Constructs a new Bottle object.
+     * Loads the bottle images and ensures the bottle is placed at a random position with a minimum distance from other bottles.
+     */
+    constructor() {
+        super();
+        this.loadImages(this.IMAGES_WALKING);
+
+        // Set the bottle's position randomly within the range, ensuring it's not too close to other bottles.
+        this.setPositionWithMinDistance(300, 1700, 100);
+        
+        // Select a random image for the bottle.
+        const randomImageIndex = Math.floor(Math.random() * this.IMAGES_WALKING.length);
+        this.img = this.imageCache[this.IMAGES_WALKING[randomImageIndex]];
+
+        // Log an error if the image failed to load.
+        if (!this.img) {
+            console.error('Das Bild wurde nicht korrekt geladen.', this.IMAGES_WALKING[randomImageIndex]);
+        }
+
+        // Add the bottle's x-coordinate to the list of existing bottles.
+        Bottle.existingBottles.push(this.x);
+    }
+
+    /**
+     * Sets the x-position of the bottle, ensuring that it is not placed too close to other bottles.
+     * The position is chosen randomly between the minX and maxX values, and it will retry until a valid position is found.
+     * 
+     * @param {number} minX - The minimum x-coordinate for the bottle's position.
+     * @param {number} maxX - The maximum x-coordinate for the bottle's position.
+     * @param {number} minDistance - The minimum distance the bottle must be placed from any existing bottle.
+     */
+    setPositionWithMinDistance(minX, maxX, minDistance) {
+        let attempts = 0;
+        const maxAttempts = 100;
+
+        do {
+            attempts++;
+            this.x = minX + Math.random() * (maxX - minX);  // Set random x position within range
+            let isTooClose = false;
+
+            // Check if the new position is too close to any existing bottles
+            for (let bottleX of Bottle.existingBottles) {
+                if (Math.abs(this.x - bottleX) &lt; minDistance) {
+                    isTooClose = true;
+                    break;
+                }
+            }
+
+            // If the new position is valid (not too close), exit the loop
+            if (!isTooClose) {
+                return;
+            }
+        } while (attempts &lt; maxAttempts);
+
+        // If no valid position is found after maxAttempts, set a default position
+        this.x = minX;
+    }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AudioManager.html">AudioManager</a></li><li><a href="BackgroundObject.html">BackgroundObject</a></li><li><a href="Bottle.html">Bottle</a></li><li><a href="Bottlebar.html">Bottlebar</a></li><li><a href="Character.html">Character</a></li><li><a href="Chicken.html">Chicken</a></li><li><a href="Cloud.html">Cloud</a></li><li><a href="Coin.html">Coin</a></li><li><a href="Coinbar.html">Coinbar</a></li><li><a href="CollisionHandler.html">CollisionHandler</a></li><li><a href="Drawableobject.html">Drawableobject</a></li><li><a href="Endboss.html">Endboss</a></li><li><a href="Keyboard.html">Keyboard</a></li><li><a href="Level.html">Level</a></li><li><a href="MovableObject.html">MovableObject</a></li><li><a href="Statusbar.html">Statusbar</a></li><li><a href="Statusbarendboss.html">Statusbarendboss</a></li><li><a href="ThrowableObject.html">ThrowableObject</a></li><li><a href="World.html">World</a></li></ul><h3>Global</h3><ul><li><a href="global.html#clearAllIntervals">clearAllIntervals</a></li><li><a href="global.html#clearAllTimeouts">clearAllTimeouts</a></li><li><a href="global.html#exitToMainMenu">exitToMainMenu</a></li><li><a href="global.html#handleButtonPress">handleButtonPress</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initLevel">initLevel</a></li><li><a href="global.html#restartGame">restartGame</a></li><li><a href="global.html#setupButtonEvents">setupButtonEvents</a></li><li><a href="global.html#toggleFullscreen">toggleFullscreen</a></li><li><a href="global.html#toggleMute">toggleMute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Oct 21 2024 16:48:17 GMT+0200 (Mitteleuropäische Sommerzeit)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+    "source": {
+      "include": [
+        "models/",
+        "js/game.js",
+        "js/startscreen.js"
+      ],
+      "includePattern": ".js$"
+    },
+    "opts": {
+      "destination": "./docs"
+    }
+  }
+  

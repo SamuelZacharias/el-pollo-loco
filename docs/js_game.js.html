@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: js/game.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: js/game.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>let canvas;
+let world;
+let keyboard = new Keyboard();
+let audioManager = new AudioManager();
+let isMuted = false;
+
+/**
+ * Initializes the game world, sets up the canvas, loads the saved mute state, 
+ * and calls the necessary functions to start the game.
+ */
+function init() {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    world = new World(canvas, keyboard);
+    world.run();
+
+    document.getElementById('mute-btn').style.display = 'block';
+
+    const savedMuteState = localStorage.getItem('isMuted');
+    if (savedMuteState !== null) {
+        isMuted = (savedMuteState === 'true');
+        audioManager.muteAll(isMuted);
+
+        document.getElementById('mute-btn').src = isMuted ? 'img/landing_page/unmute.png' : 'img/landing_page/mute.png';
+    }
+
+    audioManager.playBackgroundMusic();
+    setupButtonEvents();
+}
+
+/**
+ * Sets up event listeners for button interactions and maps keys to keyboard actions.
+ * Buttons are configured for movement and actions like throwing objects.
+ */
+function setupButtonEvents() {
+    const buttonConfig = [
+        { id: 'back-btn', key: 'LEFT' },
+        { id: 'forward-btn', key: 'RIGHT' },
+        { id: 'up-btn', key: 'UP' },
+        { id: 'sword-btn', key: 'SPACE', specialAction: true }
+    ];
+
+    buttonConfig.forEach(({ id, key, specialAction }) => {
+        const button = document.getElementById(id);
+
+        button.addEventListener('mousedown', () => handleButtonPress(key, true, specialAction, button));
+        button.addEventListener('mouseup', () => handleButtonPress(key, false, specialAction, button));
+
+        button.addEventListener('touchstart', () => handleButtonPress(key, true, specialAction, button));
+        button.addEventListener('touchend', () => handleButtonPress(key, false, specialAction, button));
+    });
+
+    document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
+    document.getElementById('mute-btn').addEventListener('click', toggleMute);
+}
+
+/**
+ * Handles the pressing and releasing of buttons. This function updates the keyboard state,
+ * triggers special actions like throwing objects, and toggles the button's active class.
+ * 
+ * @param {string} key - The key corresponding to the keyboard action.
+ * @param {boolean} isActive - Whether the button is currently active or not.
+ * @param {boolean} specialAction - Determines if the button triggers a special action (e.g., throwing an object).
+ * @param {HTMLElement} button - The button element being interacted with.
+ */
+function handleButtonPress(key, isActive, specialAction, button) {
+    keyboard[key] = isActive;
+    
+    if (specialAction &amp;&amp; isActive &amp;&amp; world?.checkThrowObjects) {
+        world.checkThrowObjects();
+    }
+
+    if (isActive) {
+        button.classList.add('active');
+    } else {
+        button.classList.remove('active');
+    }
+}
+
+/**
+ * Toggles the fullscreen mode for the game canvas. This function checks for different browser
+ * methods to request fullscreen and applies the appropriate one.
+ */
+function toggleFullscreen() {
+    let canvas = document.getElementById('canvas');
+    if (canvas.requestFullscreen) {
+        canvas.requestFullscreen();
+    } else if (canvas.mozRequestFullScreen) {
+        canvas.mozRequestFullScreen();
+    } else if (canvas.webkitRequestFullscreen) {
+        canvas.webkitRequestFullscreen();
+    } else if (canvas.msRequestFullscreen) {
+        canvas.msRequestFullscreen();
+    }
+}
+
+/**
+ * Toggles the mute state of the game. The mute state is saved to localStorage and the button icon is updated accordingly.
+ */
+function toggleMute() {
+    isMuted = !isMuted;
+    audioManager.muteAll(isMuted);
+
+    localStorage.setItem('isMuted', isMuted);
+
+    document.getElementById('mute-btn').src = isMuted ? 'img/landing_page/unmute.png' : 'img/landing_page/mute.png';
+}
+
+/**
+ * Listens for keydown events and updates the corresponding keyboard key state.
+ * Also, checks if the 'Q' key is pressed to trigger the object-throwing functionality.
+ */
+window.addEventListener('keydown', (event) => {
+    if (event.keyCode == 68) keyboard.RIGHT = true;
+    if (event.keyCode == 65) keyboard.LEFT = true;
+    if (event.keyCode == 32) keyboard.UP = true;
+    if (event.keyCode == 83) keyboard.DOWN = true;
+    if (event.keyCode == 81) {
+        keyboard.Q = true;
+        if (world &amp;&amp; typeof world.checkThrowObjects === 'function') {
+            world.checkThrowObjects();
+        }
+    }
+});
+
+/**
+ * Listens for keyup events and updates the corresponding keyboard key state to false.
+ */
+window.addEventListener('keyup', (event) => {
+    if (event.keyCode == 68) keyboard.RIGHT = false;
+    if (event.keyCode == 65) keyboard.LEFT = false;
+    if (event.keyCode == 32) keyboard.UP = false;
+    if (event.keyCode == 83) keyboard.DOWN = false;
+    if (event.keyCode == 81) keyboard.Q = false;
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AudioManager.html">AudioManager</a></li><li><a href="BackgroundObject.html">BackgroundObject</a></li><li><a href="Bottle.html">Bottle</a></li><li><a href="Bottlebar.html">Bottlebar</a></li><li><a href="Character.html">Character</a></li><li><a href="Chicken.html">Chicken</a></li><li><a href="Cloud.html">Cloud</a></li><li><a href="Coin.html">Coin</a></li><li><a href="Coinbar.html">Coinbar</a></li><li><a href="CollisionHandler.html">CollisionHandler</a></li><li><a href="Drawableobject.html">Drawableobject</a></li><li><a href="Endboss.html">Endboss</a></li><li><a href="Keyboard.html">Keyboard</a></li><li><a href="Level.html">Level</a></li><li><a href="MovableObject.html">MovableObject</a></li><li><a href="Statusbar.html">Statusbar</a></li><li><a href="Statusbarendboss.html">Statusbarendboss</a></li><li><a href="ThrowableObject.html">ThrowableObject</a></li><li><a href="World.html">World</a></li></ul><h3>Global</h3><ul><li><a href="global.html#clearAllIntervals">clearAllIntervals</a></li><li><a href="global.html#clearAllTimeouts">clearAllTimeouts</a></li><li><a href="global.html#exitToMainMenu">exitToMainMenu</a></li><li><a href="global.html#handleButtonPress">handleButtonPress</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initLevel">initLevel</a></li><li><a href="global.html#restartGame">restartGame</a></li><li><a href="global.html#setupButtonEvents">setupButtonEvents</a></li><li><a href="global.html#toggleFullscreen">toggleFullscreen</a></li><li><a href="global.html#toggleMute">toggleMute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Oct 21 2024 16:48:17 GMT+0200 (Mitteleuropäische Sommerzeit)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

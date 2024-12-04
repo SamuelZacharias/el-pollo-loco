@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: models/world.class.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: models/world.class.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * The World class represents the game world where the character, enemies, and background objects exist.
+ * It handles the main game loop, drawing objects to the canvas, managing collisions, and other gameplay logic.
+ */
+class World {
+    /**
+     * The character controlled by the player.
+     * @type {Character}
+     */
+    character = new Character();
+    
+    /**
+     * The level object containing the enemies, clouds, and background objects.
+     * @type {Level}
+     */
+    level = level1;
+
+    /**
+     * The drawing context of the canvas.
+     * @type {CanvasRenderingContext2D}
+     */
+    ctx;
+
+    /**
+     * The canvas element on which the game is rendered.
+     * @type {HTMLCanvasElement}
+     */
+    canvas;
+
+    /**
+     * Keyboard input handler for managing player controls.
+     * @type {Keyboard}
+     */
+    keyboard;
+
+    /**
+     * X-offset for the camera in the game world.
+     * @type {number}
+     */
+    camera_x = 0;
+
+    /**
+     * The status bar for displaying the character's health.
+     * @type {Statusbar}
+     */
+    statusbar = new Statusbar();
+
+    /**
+     * The status bar for displaying the character's collected coins.
+     * @type {Coinbar}
+     */
+    coinbar = new Coinbar();
+
+    /**
+     * The status bar for displaying the number of bottles collected.
+     * @type {Bottlebar}
+     */
+    bottlebar = new Bottlebar();
+
+    /**
+     * The status bar for displaying the health of the end boss.
+     * @type {Statusbarendboss}
+     */
+    statusbarendboss = new Statusbarendboss();
+
+    /**
+     * An array of throwable objects (bottles) in the game.
+     * @type {ThrowableObject[]}
+     */
+    throwableObjects = [];
+
+    /**
+     * A bottle object representing a collectible item.
+     * @type {Bottle}
+     */
+    bottle = new Bottle();
+
+    /**
+     * A coin object representing a collectible item.
+     * @type {Coin}
+     */
+    coin = new Coin();
+
+    /**
+     * Flag to track whether bottles have already been spawned for the end boss.
+     * @type {boolean}
+     */
+    bottlesSpawned = false;
+
+    /**
+     * Flag to track whether the end boss has been defeated.
+     * @type {boolean}
+     */
+    bossDefeated = false;
+
+    /**
+     * Flag to track whether the character is dead.
+     * @type {boolean}
+     */
+    characterDead = false;
+
+    /**
+     * The collision handler that manages all game collisions.
+     * @type {CollisionHandler}
+     */
+    collisionHandler;
+
+    /**
+     * Constructor for the World class.
+     * Initializes the game world and sets up the canvas, keyboard, and collision handler.
+     * 
+     * @param {HTMLCanvasElement} canvas - The canvas element for rendering the game.
+     * @param {Keyboard} keyboard - The keyboard input handler.
+     */
+    constructor(canvas, keyboard) {
+        this.ctx = canvas.getContext('2d');
+        this.canvas = canvas;
+        this.keyboard = keyboard;
+        this.collisionHandler = new CollisionHandler(this);
+        this.draw();
+        this.setWorld();
+        this.run();
+    }
+
+    /**
+     * Links the world instance to the character.
+     */
+    setWorld() {
+        this.character.world = this;
+    }
+
+    /**
+     * Starts the game loop, checks for collisions, throwable objects, and renders the world.
+     */
+    run() {
+        this.gameInterval = setInterval(() => {
+            this.collisionHandler.handleCollisions();
+            this.checkThrowObjects();
+            this.draw();
+        }, 1000 / 60);
+    }
+
+    /**
+     * Resets the enemies, bottles, and coins in the current level.
+     */
+    resetLevelObjects() {
+        if (this.level.enemies) {
+            this.level.enemies.splice(0, this.level.enemies.length);
+        }
+
+        if (this.level.bottles) {
+            this.level.bottles.splice(0, this.level.bottles.length);
+        }
+
+        if (this.level.coins) {
+            this.level.coins.splice(0, this.level.coins.length);
+        }
+    }
+
+    /**
+     * Checks if the player can throw a bottle and creates a new throwable object if possible.
+     */
+    checkThrowObjects() {
+        const swordButtonPressed = document.getElementById('sword-btn')?.classList.contains('active');
+        
+        if ((this.keyboard.Q || swordButtonPressed) &amp;&amp; ThrowableObject.canThrow() &amp;&amp; this.bottlebar.percentage > 0) {
+            let direction = this.character.otherDirection ? -1 : 1;
+            let bottle = new ThrowableObject(this.character.x, this.character.y, direction);
+            this.throwableObjects.push(bottle);
+            this.bottlebar.decreasePercentage(20);
+    
+            ThrowableObject.startCooldown();
+        }
+    }
+
+    /**
+     * Draws all game elements (character, enemies, objects) on the canvas.
+     * This method clears the canvas, sets the camera position, and renders each object.
+     */
+    draw() {
+        if (this.isGameOver) {
+            return;
+        }
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.translate(this.camera_x, 0);
+        this.addObjectsToMap(this.level.backgroundObjects);
+        this.addObjectsToMap(this.level.clouds);
+        this.ctx.translate(-this.camera_x, 0);
+        this.checkExistenceEndboss();
+        this.addToMap(this.statusbar);
+        this.addToMap(this.coinbar);
+        this.addToMap(this.bottlebar);
+        this.ctx.translate(this.camera_x, 0);
+        this.addToMap(this.character);
+        this.addObjectsToMap(this.level.enemies);
+        this.addObjectsToMap(this.throwableObjects);
+        this.ctx.translate(-this.camera_x, 0);
+        if (this.bossDefeated || this.characterDead) {
+            return;
+        }
+    }
+
+    /**
+     * Checks whether the end boss exists and adds bottles if the player is close to the boss.
+     */
+    checkExistenceEndboss() {
+        let endboss = this.level.enemies.find(enemy => enemy instanceof Endboss);
+        if (endboss &amp;&amp; endboss.energy > 0 &amp;&amp; this.character.x >= 808) {
+            this.addToMap(this.statusbarendboss);
+        }
+        if (this.character.x >= 808 &amp;&amp; !this.bottlesSpawned) {
+            this.spawnNewBottles(5);
+            this.bottlesSpawned = true;
+        }
+    }
+
+    /**
+     * Spawns a given number of new bottles in the game.
+     * 
+     * @param {number} count - The number of bottles to spawn.
+     */
+    spawnNewBottles(count) {
+        for (let i = 0; i &lt; count; i++) {
+            let newBottle = new Bottle();
+            newBottle.x = 100 + Math.random() * 650;
+            this.level.enemies.push(newBottle);
+        }
+    }
+
+    /**
+     * Displays the victory screen when the game is won.
+     */
+    showWinScreen() {
+        this.isGameOver = true;
+        let img = new Image();
+        img.src = 'img/9_intro_outro_screens/win/win_2.png';
+        img.onload = () => {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+            document.getElementById('end-game-buttons').style.display = 'block';
+        };
+    }
+
+    /**
+     * Displays the game over screen when the character dies.
+     */
+    showGameOverScreen() {
+        this.isGameOver = true;
+        let img = new Image();
+        img.src = 'img/9_intro_outro_screens/game_over/game over.png';
+        img.onload = () => {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+            document.getElementById('end-game-buttons').style.display = 'block';
+        };
+    }
+
+    /**
+     * Adds an array of game objects to the map.
+     * 
+     * @param {Array} objects - Array of game objects to add.
+     */
+    addObjectsToMap(objects) {
+        objects.forEach(o => this.addToMap(o));
+    }
+
+    /**
+     * Draws a single movable object to the map, with support for flipping the object.
+     * 
+     * @param {MovableObject} mo - The object to draw on the map.
+     */
+    addToMap(mo) {
+        if (mo.otherDirection) {
+            this.flipImage(mo);
+        }
+        mo.draw(this.ctx);
+        mo.drawFrame(this.ctx);
+        if (mo.otherDirection) {
+            this.flipImageBack(mo);
+        }
+    }
+
+    /**
+     * Flips the image horizontally by modifying the canvas context.
+     * 
+     * @param {MovableObject} mo - The object to flip horizontally.
+     */
+    flipImage(mo) {
+        this.ctx.save();
+        this.ctx.translate(mo.width, 0);
+        this.ctx.scale(-1, 1);
+        mo.x = mo.x * -1;
+    }
+
+    /**
+     * Restores the flipped image back to its original position.
+     * 
+     * @param {MovableObject} mo - The object to restore after flipping.
+     */
+    flipImageBack(mo) {
+        mo.x = mo.x * -1;
+        this.ctx.restore();
+    }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AudioManager.html">AudioManager</a></li><li><a href="BackgroundObject.html">BackgroundObject</a></li><li><a href="Bottle.html">Bottle</a></li><li><a href="Bottlebar.html">Bottlebar</a></li><li><a href="Character.html">Character</a></li><li><a href="Chicken.html">Chicken</a></li><li><a href="Cloud.html">Cloud</a></li><li><a href="Coin.html">Coin</a></li><li><a href="Coinbar.html">Coinbar</a></li><li><a href="CollisionHandler.html">CollisionHandler</a></li><li><a href="Drawableobject.html">Drawableobject</a></li><li><a href="Endboss.html">Endboss</a></li><li><a href="Keyboard.html">Keyboard</a></li><li><a href="Level.html">Level</a></li><li><a href="MovableObject.html">MovableObject</a></li><li><a href="Statusbar.html">Statusbar</a></li><li><a href="Statusbarendboss.html">Statusbarendboss</a></li><li><a href="ThrowableObject.html">ThrowableObject</a></li><li><a href="World.html">World</a></li></ul><h3>Global</h3><ul><li><a href="global.html#clearAllIntervals">clearAllIntervals</a></li><li><a href="global.html#clearAllTimeouts">clearAllTimeouts</a></li><li><a href="global.html#exitToMainMenu">exitToMainMenu</a></li><li><a href="global.html#handleButtonPress">handleButtonPress</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initLevel">initLevel</a></li><li><a href="global.html#restartGame">restartGame</a></li><li><a href="global.html#setupButtonEvents">setupButtonEvents</a></li><li><a href="global.html#toggleFullscreen">toggleFullscreen</a></li><li><a href="global.html#toggleMute">toggleMute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Oct 21 2024 16:48:17 GMT+0200 (Mitteleuropäische Sommerzeit)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
